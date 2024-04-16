@@ -7,5 +7,14 @@
     "code": "P001",
     "stock": 8,
     "id": 2
+  },
+  {
+    "title": "Producto 2",
+    "description": "Descripción del producto 2",
+    "price": 20500,
+    "thumbnail": "/imagen2.jpg",
+    "code": "P002",
+    "stock": 8,
+    "id": 3
   }
 ]

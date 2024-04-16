@@ -1,5 +1,12 @@
-const fs = require('fs').promises;
+const express = require('express');
 const path = require('path');
+const fs = require('fs').promises;
+
+const app = express();
+const PORT = 3000;
+const filePath = path.join(__dirname, 'productos.json');
+
+app.use(express.json());
 
 class ProductManager {
     constructor(filePath) {
@@ -101,22 +108,49 @@ class ProductManager {
     }
 }
 
-
-const filePath = path.join(__dirname, 'productos.json');
-
-
 const productManager = new ProductManager(filePath);
-productManager.loadProducts().then(() => {
-
-    productManager.addProduct({
-        title: "Producto 1",
-        description: "Descripción del producto 1",
-        price: 20500,
-        thumbnail: "/imagen1.jpg",
-        code: "P001",
-        stock: 8
-    });
 
 
+productManager.loadProducts().catch(error => {
+    console.error('Error al cargar los productos:', error);
+});
 
+
+app.get('/productos', (req, res) => {
+    const products = productManager.getProducts();
+    res.json(products);
+});
+
+app.get('/productos/:id', (req, res) => {
+    const productId = parseInt(req.params.id);
+    const product = productManager.getProductById(productId);
+    if (product) {
+        res.json(product);
+    } else {
+        res.status(404).json({ error: 'Producto no encontrado' });
+    }
+});
+
+app.post('/productos', (req, res) => {
+    const newProduct = req.body;
+    productManager.addProduct(newProduct);
+    res.status(201).json(newProduct);
+});
+
+app.put('/productos/:id', (req, res) => {
+    const productId = parseInt(req.params.id);
+    const updatedDetails = req.body;
+    productManager.updateProduct(productId, updatedDetails);
+    res.json({ message: `Producto con ID ${productId} actualizado` });
+});
+
+app.delete('/productos/:id', (req, res) => {
+    const productId = parseInt(req.params.id);
+    productManager.deleteProduct(productId);
+    res.json({ message: `Producto con ID ${productId} eliminado` });
+});
+
+
+app.listen(PORT, () => {
+    console.log(`Servidor en ejecución en http://localhost:${PORT}`);
 });

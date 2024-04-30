@@ -1,6 +1,4 @@
 const fs = require('fs').promises;
-const { log } = require('console');
-const path = require('path');
 
 class ProductManager {
     constructor(filePath) {
@@ -24,7 +22,6 @@ class ProductManager {
                 console.error('Error al cargar los productos:', error);
             }
         }
-
     }
 
     async saveProducts() {
@@ -36,20 +33,18 @@ class ProductManager {
         }
     }
 
-    addProduct(product) {
+    async addProduct(product) {
         if (!this.isProductValid(product)) {
-            console.log("Producto no válido");
-            return;
+            throw new Error("Producto no válido");
         }
 
         if (this.isCodeDuplicate(product.code)) {
-            console.log("El código del producto está duplicado");
-            return;
+            throw new Error("El código del producto está duplicado");
         }
 
         product.id = this.nextId++;
         this.products.push(product);
-        this.saveProducts();
+        await this.saveProducts();
     }
 
     getProducts() {
@@ -61,7 +56,7 @@ class ProductManager {
         if (product) {
             return product;
         } else {
-            console.log("No se encontró el producto");
+            throw new Error("No se encontró el producto");
         }
     }
 
@@ -80,25 +75,30 @@ class ProductManager {
         return this.products.some(p => p.code === code);
     }
 
-    updateProduct(id, newDetails) {
+    async updateProduct(id, newDetails) {
         const productIndex = this.products.findIndex(product => product.id === id);
         if (productIndex !== -1) {
-            this.products[productIndex] = { ...this.products[productIndex], ...newDetails };
-            console.log(`Producto con ID ${id} actualizado con éxito`);
-            this.saveProducts();
+            const updatedProduct = { ...this.products[productIndex], ...newDetails };
+            if (this.isProductValid(updatedProduct)) {
+                this.products[productIndex] = updatedProduct;
+                console.log(`Producto con ID ${id} actualizado con éxito`);
+                await this.saveProducts();
+            } else {
+                throw new Error("Los detalles actualizados del producto no son válidos");
+            }
         } else {
-            console.log(`No se encontró ningún producto con el ID ${id}`);
+            throw new Error(`No se encontró ningún producto con el ID ${id}`);
         }
     }
 
-    deleteProduct(id) {
+    async deleteProduct(id) {
         const productIndex = this.products.findIndex(product => product.id === id);
         if (productIndex !== -1) {
             const deletedProduct = this.products.splice(productIndex, 1)[0];
             console.log("Producto eliminado:", deletedProduct);
-            this.saveProducts();
+            await this.saveProducts();
         } else {
-            console.log(`No se encontró ningún producto con el ID ${id}`);
+            throw new Error(`No se encontró ningún producto con el ID ${id}`);
         }
     }
 }

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RealTimeProducts</title>
+</head>
+
+<body>
+    <h1>Lista de Productos en Tiempo Real</h1>
+    <ul id="productList">
+
+    </ul>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+
+        socket.on('productCreated', (data) => {
+
+            fetchProductsAndUpdateList();
+        });
+
+        socket.on('productDeleted', (productId) => {
+
+            fetchProductsAndUpdateList();
+        });
+
+
+        function fetchProductsAndUpdateList() {
+            fetch('/api/products')
+                .then(response => response.json())
+                .then(products => {
+                    const productList = document.getElementById('productList');
+                    productList.innerHTML = '';
+                    products.forEach(product => {
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `
+                            <strong>Título:</strong> ${product.title}<br>
+                            <strong>Descripción:</strong> ${product.description}<br>
+                            <strong>Precio:</strong> ${product.price}<br>
+                            <strong>Thumbnail:</strong> ${product.thumbnail}<br>
+                            <strong>Código:</strong> ${product.code}<br>
+                            <strong>Stock:</strong> ${product.stock}<br><br>
+                        `;
+                        productList.appendChild(listItem);
+                    });
+                })
+                .catch(error => console.error('Error al obtener productos:', error));
+        }
+
+
+        document.addEventListener('DOMContentLoaded', fetchProductsAndUpdateList);
+    </script>
+</body>
+
+</html>

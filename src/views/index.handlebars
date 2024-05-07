@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Products</title>
+    <title>Index</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
 </head>
 
@@ -12,7 +12,14 @@
     <h1>Lista de Productos en Tiempo Real</h1>
     <ul>
         {{#each productos}}
-        <li>{{this}}</li>
+        <li>
+            <strong>Título:</strong> {{this.title}} <br>
+            <strong>Descripción:</strong> {{this.description}} <br>
+            <strong>Precio:</strong> {{this.price}} <br>
+            <strong>Thumbnail:</strong> {{this.thumbnail}} <br>
+            <strong>Código:</strong> {{this.code}} <br>
+            <strong>Stock:</strong> {{this.stock}} <br>
+        </li>
         {{/each}}
     </ul>
 

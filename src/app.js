@@ -1,81 +1,90 @@
 const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
-const handlebars = require('handlebars');
 const path = require('path');
-const fs = require('fs');
-const ProductManager = require('./productManager');
-const CartManager = require('./cartManager');
+const mongoose = require('mongoose');
+const exphbs = require('express-handlebars');
+const socketio = require('socket.io');
+const Message = require('./dao/models/message.js');
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
+const http = require('http').Server(app);
+const io = socketio(http);
 
 
-app.engine('.handlebars', (filePath, options, callback) => {
-    fs.readFile(filePath, (err, content) => {
-        if (err) return callback(err);
-        const template = handlebars.compile(content.toString());
-        return callback(null, template(options));
+mongoose.connect('mongodb://127.0.0.1:27017')
+    .then(() => {
+        console.log('Conexión a MongoDB establecida');
+    })
+    .catch(err => {
+        console.error('Error de conexión a MongoDB:', err);
+    });
+
+
+io.on('connection', async (socket) => {
+    console.log('Cliente conectado');
+
+
+    try {
+        const messages = await Message.find();
+        socket.emit('loadMessages', messages);
+    } catch (error) {
+        console.error('Error al obtener mensajes:', error);
+    }
+
+
+    socket.on('sendMessage', async (data) => {
+        const { user, message } = data;
+        const newMessage = new Message({ user, message });
+        await newMessage.save();
+
+
+        io.emit('message', data);
     });
 });
-app.set('view engine', '.handlebars');
-app.set('views', path.join(__dirname, 'views'));
 
 
 app.use(express.json());
 
 
-const productManager = new ProductManager(path.join(__dirname, 'productos.json'));
-const cartManager = new CartManager(path.join(__dirname, 'carritos.json'));
-
-const productRoutes = require('./routes/productRoutes')(productManager);
-const cartRoutes = require('./routes/cartRoutes')(cartManager, productManager);
-
-app.use('/api/products', productRoutes);
-app.use('/api/carts', cartRoutes);
+app.set('views', path.join(__dirname, 'views'));
 
 
-(async () => {
-    try {
-        await productManager.loadProducts();
-        console.log('Productos cargados correctamente.');
-    } catch (error) {
-        console.error('Error al cargar productos:', error);
+app.engine('.handlebars', exphbs({
+    defaultLayout: 'index',
+    extname: '.handlebars',
+    runtimeOptions: {
+        allowProtoMethodsByDefault: true,
+        allowProtoPropertiesByDefault: true
     }
-})();
+}));
+app.set('view engine', '.handlebars');
 
 
-app.get('/', async (req, res) => {
+app.use(express.static(path.join(__dirname, 'public')));
+
+
+app.get('/', (req, res) => {
+    res.render('index', { title: 'Mi Proyecto' });
+});
+
+
+app.get('/realTimeProducts', (req, res) => {
+    res.render('realTimeProducts', { title: 'Productos en Tiempo Real' });
+});
+
+
+app.get('/chat', async (req, res) => {
+    const Message = require('./dao/models/message.js');
     try {
-        const productos = productManager.getProducts();
-        res.render('index', { productos });
+        const messages = await Message.find();
+        res.render('chat', { messages });
     } catch (error) {
-        console.error('Error al obtener productos:', error);
+        console.error('Error al obtener mensajes:', error);
         res.status(500).send('Error interno del servidor');
     }
 });
 
 
-app.get('/realtimeproducts', (req, res) => {
-    res.render('realTimeProducts', {});
-});
-
-
-io.on('connection', (socket) => {
-    console.log('Cliente conectado');
-
-    socket.on('createProduct', (data) => {
-        io.emit('productCreated', {});
-    });
-
-    socket.on('deleteProduct', (productId) => {
-        io.emit('productDeleted', productId);
-    });
-});
-
-
 const PORT = process.env.PORT || 8080;
-server.listen(PORT, () => {
+http.listen(PORT, () => {
     console.log(`Servidor en ejecución en http://localhost:${PORT}`);
 });

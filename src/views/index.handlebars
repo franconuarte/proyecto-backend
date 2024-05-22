@@ -4,49 +4,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Index</title>
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="/css/estilos.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
 </head>
 
 <body>
-    <h1>Lista de Productos en Tiempo Real</h1>
-    <ul>
-        {{#each productos}}
-        <li>
-            <strong>Título:</strong> {{this.title}} <br>
-            <strong>Descripción:</strong> {{this.description}} <br>
-            <strong>Precio:</strong> {{this.price}} <br>
-            <strong>Thumbnail:</strong> {{this.thumbnail}} <br>
-            <strong>Código:</strong> {{this.code}} <br>
-            <strong>Stock:</strong> {{this.stock}} <br>
-        </li>
-        {{/each}}
-    </ul>
-
     <h2>Agregar Nuevo Producto</h2>
     <form id="productForm">
-        <label for="title">Título:</label>
-        <input type="text" id="title" name="title"><br><br>
-        <label for="description">Descripción:</label>
-        <input type="text" id="description" name="description"><br><br>
-        <label for="price">Precio:</label>
-        <input type="number" id="price" name="price"><br><br>
-        <label for="thumbnail">Thumbnail:</label>
-        <input type="text" id="thumbnail" name="thumbnail"><br><br>
-        <label for="code">Código:</label>
-        <input type="text" id="code" name="code"><br><br>
-        <label for="stock">Stock:</label>
-        <input type="number" id="stock" name="stock"><br><br>
+        <label for="title">Título:</label><br>
+        <input type="text" id="title" name="title" required><br>
+        <label for="description">Descripción:</label><br>
+        <textarea id="description" name="description" required></textarea><br>
+        <label for="price">Precio:</label><br>
+        <input type="number" id="price" name="price" required><br>
+        <label for="thumbnail">Thumbnail:</label><br>
+        <input type="text" id="thumbnail" name="thumbnail" required><br>
+        <label for="code">Código:</label><br>
+        <input type="text" id="code" name="code" required><br>
+        <label for="stock">Stock:</label><br>
+        <input type="number" id="stock" name="stock" required><br>
         <button type="button" id="submitBtn">Agregar Producto</button>
     </form>
 
+    <a href="/chat"><button>Comunicate con nosotros</button></a>
+
+    <h1>Lista de Productos en Tiempo Real</h1>
+    <ul id="productList"></ul>
+
     <script>
         const socket = io();
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.addEventListener('click', () => {
-            const form = document.getElementById('productForm');
-            const formData = new FormData(form);
-            const productData = Object.fromEntries(formData.entries());
+
+       
+        function deleteProduct(productId) {
+            const confirmDelete = confirm('¿Estás seguro de que quieres eliminar este producto?');
+            if (confirmDelete) {
+                fetch(`/api/products/${productId}`, {
+                    method: 'DELETE'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Producto eliminado:', data);
+                       
+                        socket.emit('productDeleted');
+                    })
+                    .catch(error => console.error('Error al eliminar producto:', error));
+            }
+        }
+
+       
+        function updateProductList(products) {
+            const productList = document.getElementById('productList');
+            productList.innerHTML = '';
+            products.forEach(product => {
+                const listItem = document.createElement('li');
+                listItem.setAttribute('id', `product-${product._id}`);
+                listItem.innerHTML = `
+                    <strong>ID:</strong> ${product._id}<br>
+                    <strong>Título:</strong> ${product.title}<br>
+                    <strong>Descripción:</strong> ${product.description}<br>
+                    <strong>Precio:</strong> ${product.price}<br>
+                    <strong>Thumbnail:</strong> ${product.thumbnail}<br>
+                    <strong>Código:</strong> ${product.code}<br>
+                    <strong>Stock:</strong> ${product.stock}<br>
+                    <button onclick="deleteProduct('${product._id}')">Eliminar</button><br><br>
+                `;
+                productList.appendChild(listItem);
+            });
+        }
+
+       
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchProductsAndUpdateList();
+        });
+
+       
+        socket.on('productCreated', () => {
+            fetchProductsAndUpdateList();
+        });
+
+        socket.on('productDeleted', () => {
+            fetchProductsAndUpdateList();
+        });
+
+     
+        function fetchProductsAndUpdateList() {
+            fetch('/api/products')
+                .then(response => response.json())
+                .then(products => {
+                    updateProductList(products);
+                })
+                .catch(error => console.error('Error al obtener productos:', error));
+        }
+
+        
+        document.getElementById('submitBtn').addEventListener('click', () => {
+            const productData = {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                price: document.getElementById('price').value,
+                thumbnail: document.getElementById('thumbnail').value,
+                code: document.getElementById('code').value,
+                stock: document.getElementById('stock').value
+            };
 
             fetch('/api/products', {
                 method: 'POST',
@@ -55,19 +115,15 @@
                 },
                 body: JSON.stringify(productData)
             })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Error al agregar el producto');
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     console.log('Producto agregado:', data);
-                    socket.emit('createProduct', {});
+                   
+                    document.getElementById('productForm').reset();
+                   
+                    socket.emit('productCreated');
                 })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
+                .catch(error => console.error('Error al agregar producto:', error));
         });
     </script>
 </body>

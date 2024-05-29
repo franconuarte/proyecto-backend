@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const CartManager = require('../dao/mongo/cartManager.js'); 
+const CartManager = require('../dao/mongo/cartManager.js');
 const cartManager = new CartManager();
 
 
@@ -33,10 +33,56 @@ router.post('/:id/products', async (req, res) => {
     const { id } = req.params;
     const { productId, quantity } = req.body;
     try {
-        await cartManager.addProductToCart(id, productId, quantity);
+        await cartManager.addToCart(id, productId, quantity);
         res.status(200).json({ message: 'Producto agregado al carrito correctamente' });
     } catch (error) {
         res.status(500).json({ error: 'Error al agregar producto al carrito' });
+    }
+});
+
+
+router.delete('/:cid/products/:pid', async (req, res) => {
+    const { cid, pid } = req.params;
+    try {
+        await cartManager.deleteProductFromCart(cid, pid);
+        res.status(200).json({ message: 'Producto eliminado del carrito correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al eliminar producto del carrito' });
+    }
+});
+
+
+router.put('/:cid', async (req, res) => {
+    const { cid } = req.params;
+    const { products } = req.body;
+    try {
+        const cart = await cartManager.updateCart(cid, products);
+        res.status(200).json(cart);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al actualizar carrito' });
+    }
+});
+
+
+router.put('/:cid/products/:pid', async (req, res) => {
+    const { cid, pid } = req.params;
+    const { quantity } = req.body;
+    try {
+        await cartManager.updateProductQuantity(cid, pid, quantity);
+        res.status(200).json({ message: 'Cantidad de producto actualizada correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al actualizar la cantidad del producto' });
+    }
+});
+
+
+router.delete('/:cid', async (req, res) => {
+    const { cid } = req.params;
+    try {
+        await cartManager.clearCart(cid);
+        res.status(200).json({ message: 'Todos los productos eliminados del carrito' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al eliminar todos los productos del carrito' });
     }
 });
 

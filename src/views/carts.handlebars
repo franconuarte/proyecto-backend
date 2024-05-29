@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito de Compras</title>
+</head>
+
+<body>
+    <h1>Carrito de Compras</h1>
+    <ul id="cartList"></ul>
+
+    <script>
+        const fetchCart = () => {
+            fetch(`/api/carts/`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al obtener carrito');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const cartId = data._id;
+                    updateCartList(data.products);
+                })
+                .catch(error => console.error('Error al obtener carrito:', error));
+        };
+
+        const updateCartList = (products) => {
+            const cartList = document.getElementById('cartList');
+            cartList.innerHTML = '';
+            products.forEach(product => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <strong>ID:</strong> ${product.productId._id}<br>
+                    <strong>Título:</strong> ${product.productId.title}<br>
+                    <strong>Precio:</strong> ${product.productId.price}<br>
+                    <strong>Cantidad:</strong> ${product.quantity}<br>
+                `;
+                cartList.appendChild(listItem);
+            });
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchCart();
+        });
+
+
+        socket.on('productAddedToCart', () => {
+            fetchCart();
+        });
+
+    </script>
+</body>
+
+</html>

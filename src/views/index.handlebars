@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{title}}</title>
-    <link rel="stylesheet" href="/css/estilos.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
 </head>
 
@@ -28,32 +27,82 @@
     </form>
 
     <a href="/chat"><button>Comunicate con nosotros</button></a>
+    <a href="/carts"><button>Ver Carrito</button></a>
 
     <h1>Lista de Productos en Tiempo Real</h1>
     <ul id="productList"></ul>
 
+
+    <button id="prevPageBtn">Página Anterior</button>
+    <button id="nextPageBtn">Página Siguiente</button>
+
     <script>
         const socket = io();
 
-       
+        let currentPage = 1;
+        let totalPages = 1;
+
+
+
         function deleteProduct(productId) {
             const confirmDelete = confirm('¿Estás seguro de que quieres eliminar este producto?');
             if (confirmDelete) {
                 fetch(`/api/products/${productId}`, {
                     method: 'DELETE'
                 })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Error al eliminar producto');
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         console.log('Producto eliminado:', data);
-                       
-                        socket.emit('productDeleted');
+                        fetchProductsAndUpdateList(currentPage);
                     })
                     .catch(error => console.error('Error al eliminar producto:', error));
             }
         }
 
-       
-        function updateProductList(products) {
+
+        function addToCart(productId) {
+            fetch(`/api/carts`, {
+                method: 'POST'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al crear carrito');
+                    }
+                    return response.json();
+                })
+                .then(cartData => {
+                    const cartId = cartData._id;
+                    fetch(`/api/carts/${cartId}/products`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ productId, quantity: 1 })
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Error al agregar producto al carrito');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Producto agregado al carrito:', data);
+                            alert('Producto agregado al carrito');
+                        })
+                        .catch(error => console.error('Error al agregar producto al carrito:', error));
+                })
+                .catch(error => console.error('Error al crear carrito:', error));
+        }
+
+
+        function updateProductList({ payload: products, totalPages: tp, page: cp, prevPage, nextPage }) {
+            totalPages = tp;
+            currentPage = cp;
             const productList = document.getElementById('productList');
             productList.innerHTML = '';
             products.forEach(product => {
@@ -67,37 +116,46 @@
                     <strong>Thumbnail:</strong> ${product.thumbnail}<br>
                     <strong>Código:</strong> ${product.code}<br>
                     <strong>Stock:</strong> ${product.stock}<br>
-                    <button onclick="deleteProduct('${product._id}')">Eliminar</button><br><br>
+                    <button onclick="deleteProduct('${product._id}')">Eliminar</button>
+                    <button onclick="addToCart('${product._id}')">Agregar al carrito</button><br><br>
                 `;
                 productList.appendChild(listItem);
             });
+
+
+            document.getElementById('prevPageBtn').disabled = !prevPage;
+            document.getElementById('nextPageBtn').disabled = !nextPage;
         }
 
-       
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchProductsAndUpdateList();
-        });
 
-       
-        socket.on('productCreated', () => {
-            fetchProductsAndUpdateList();
-        });
-
-        socket.on('productDeleted', () => {
-            fetchProductsAndUpdateList();
-        });
-
-     
-        function fetchProductsAndUpdateList() {
-            fetch('/api/products')
-                .then(response => response.json())
-                .then(products => {
-                    updateProductList(products);
+        function fetchProductsAndUpdateList(page = 1) {
+            fetch(`/api/products?limit=5&page=${page}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al obtener productos');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    updateProductList(data);
                 })
                 .catch(error => console.error('Error al obtener productos:', error));
         }
 
-        
+
+        document.getElementById('prevPageBtn').addEventListener('click', () => {
+            if (currentPage > 1) {
+                fetchProductsAndUpdateList(currentPage - 1);
+            }
+        });
+
+        document.getElementById('nextPageBtn').addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                fetchProductsAndUpdateList(currentPage + 1);
+            }
+        });
+
+
         document.getElementById('submitBtn').addEventListener('click', () => {
             const productData = {
                 title: document.getElementById('title').value,
@@ -115,16 +173,35 @@
                 },
                 body: JSON.stringify(productData)
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al agregar producto');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     console.log('Producto agregado:', data);
-                   
                     document.getElementById('productForm').reset();
-                   
+                    fetchProductsAndUpdateList(currentPage);
                     socket.emit('productCreated');
                 })
                 .catch(error => console.error('Error al agregar producto:', error));
         });
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchProductsAndUpdateList();
+        });
+
+
+        socket.on('productCreated', () => {
+            fetchProductsAndUpdateList(currentPage);
+        });
+
+        socket.on('productDeleted', () => {
+            fetchProductsAndUpdateList(currentPage);
+        });
+
     </script>
 </body>
 

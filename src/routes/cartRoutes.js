@@ -6,7 +6,11 @@ const cartManager = new CartManager();
 
 router.post('/', async (req, res) => {
     try {
-        const cart = await cartManager.addCart();
+        // Aquí deberías obtener el ID del usuario autenticado desde el objeto `req`
+        const userId = req.user.id; // Por ejemplo, si estás utilizando JWT, puedes acceder al ID del usuario desde el token
+
+        // Crea el carrito y asigna el ID del usuario
+        const cart = await cartManager.addCart(userId);
         res.status(201).json(cart);
     } catch (error) {
         res.status(500).json({ error: 'Error al crear carrito' });
@@ -14,10 +18,11 @@ router.post('/', async (req, res) => {
 });
 
 
+
 router.get('/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        const cart = await cartManager.getCartById(id);
+        const cart = await cartManager.getCart(id); // Cambiamos getCartById a getCart
         if (cart) {
             res.json(cart);
         } else {
@@ -27,6 +32,7 @@ router.get('/:id', async (req, res) => {
         res.status(500).json({ error: 'Error al obtener carrito' });
     }
 });
+
 
 
 router.post('/:id/products', async (req, res) => {

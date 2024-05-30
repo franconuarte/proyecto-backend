@@ -3,10 +3,14 @@ const path = require('path');
 const mongoose = require('mongoose');
 const exphbs = require('express-handlebars');
 const socketio = require('socket.io');
+const session = require('express-session');
+const bodyParser = require('body-parser');
 const productsRouter = require('./routes/productRoutes.js');
 const cartsRouter = require('./routes/cartRoutes.js');
+const authRouter = require('./routes/authRoutes.js'); // Importa las rutas de autenticación
 const Message = require('./dao/models/message.js');
 const ProductManager = require('./dao/mongo/productManager.js');
+const authMiddleware = require('./middleware/authMiddleware.js'); // Importa el middleware de autenticación
 
 const app = express();
 const http = require('http').Server(app);
@@ -49,9 +53,12 @@ io.on('connection', (socket) => {
 });
 
 app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(session({ secret: 'your-secret-key', resave: false, saveUninitialized: true }));
 
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
+app.use('/', authRouter); // Usa las rutas de autenticación
 
 app.set('views', path.join(__dirname, 'views'));
 
@@ -68,14 +75,14 @@ app.set('view engine', '.handlebars');
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
-    res.render('index', { title: 'Mi Proyecto' });
+    res.redirect('/register'); // Redirige automáticamente a la página de registro
 });
 
-app.get('/realTimeProducts', (req, res) => {
+app.get('/realTimeProducts', authMiddleware, (req, res) => {
     res.render('realTimeProducts', { title: 'Productos en Tiempo Real' });
 });
 
-app.get('/chat', async (req, res) => {
+app.get('/chat', authMiddleware, async (req, res) => {
     try {
         const messages = await Message.find();
         res.render('chat', { messages });
@@ -85,8 +92,11 @@ app.get('/chat', async (req, res) => {
     }
 });
 
+app.get('/index', authMiddleware, (req, res) => {
+    res.render('index', { user: req.session.user });
+});
+
 const PORT = process.env.PORT || 8080;
 http.listen(PORT, () => {
     console.log(`Servidor en ejecución en http://localhost:${PORT}`);
 });
-

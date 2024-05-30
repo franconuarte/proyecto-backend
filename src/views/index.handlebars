@@ -9,6 +9,8 @@
 </head>
 
 <body>
+    <p>Bienvenido, {{user.email}}!</p>
+    <p>Tu rol es: {{user.role}}</p>
     <h2>Agregar Nuevo Producto</h2>
     <form id="productForm">
         <label for="title">Título:</label><br>
@@ -27,11 +29,13 @@
     </form>
 
     <a href="/chat"><button>Comunicate con nosotros</button></a>
-    <a href="/carts"><button>Ver Carrito</button></a>
+    <a href="/api/carts"><button>Ver Carrito</button></a>
 
     <h1>Lista de Productos en Tiempo Real</h1>
     <ul id="productList"></ul>
 
+    <h1>Productos en tu Carrito</h1>
+    <ul id="cartProducts"></ul>
 
     <button id="prevPageBtn">Página Anterior</button>
     <button id="nextPageBtn">Página Siguiente</button>
@@ -41,8 +45,6 @@
 
         let currentPage = 1;
         let totalPages = 1;
-
-
 
         function deleteProduct(productId) {
             const confirmDelete = confirm('¿Estás seguro de que quieres eliminar este producto?');
@@ -63,7 +65,6 @@
                     .catch(error => console.error('Error al eliminar producto:', error));
             }
         }
-
 
         function addToCart(productId) {
             fetch(`/api/carts`, {
@@ -99,7 +100,6 @@
                 .catch(error => console.error('Error al crear carrito:', error));
         }
 
-
         function updateProductList({ payload: products, totalPages: tp, page: cp, prevPage, nextPage }) {
             totalPages = tp;
             currentPage = cp;
@@ -122,11 +122,9 @@
                 productList.appendChild(listItem);
             });
 
-
             document.getElementById('prevPageBtn').disabled = !prevPage;
             document.getElementById('nextPageBtn').disabled = !nextPage;
         }
-
 
         function fetchProductsAndUpdateList(page = 1) {
             fetch(`/api/products?limit=5&page=${page}`)
@@ -142,6 +140,26 @@
                 .catch(error => console.error('Error al obtener productos:', error));
         }
 
+        function fetchCartProductsAndUpdateList() {
+            fetch(`/api/carts`) // Eliminamos ${userId}/products para obtener el carrito del usuario actual
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al obtener carrito');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const cartProductList = document.getElementById('cartProducts');
+                    cartProductList.innerHTML = '';
+                    data.products.forEach(product => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = `${product.productId.title} - ${product.productId.price}`; // Accedemos a product.productId.title
+                        cartProductList.appendChild(listItem);
+                    });
+                })
+                .catch(error => console.error('Error al obtener productos del carrito:', error));
+        }
+
 
         document.getElementById('prevPageBtn').addEventListener('click', () => {
             if (currentPage > 1) {
@@ -154,7 +172,6 @@
                 fetchProductsAndUpdateList(currentPage + 1);
             }
         });
-
 
         document.getElementById('submitBtn').addEventListener('click', () => {
             const productData = {
@@ -188,11 +205,10 @@
                 .catch(error => console.error('Error al agregar producto:', error));
         });
 
-
         document.addEventListener('DOMContentLoaded', () => {
             fetchProductsAndUpdateList();
+            fetchCartProductsAndUpdateList(); // Actualiza la lista de productos del carrito al cargar la página
         });
-
 
         socket.on('productCreated', () => {
             fetchProductsAndUpdateList(currentPage);

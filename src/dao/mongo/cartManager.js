@@ -1,9 +1,11 @@
 const Cart = require('../models/cart');
 
 class CartManager {
-    async addCart() {
+
+
+    async addCart(userId) {
         try {
-            const newCart = new Cart({ products: [] });
+            const newCart = new Cart({ userId, products: [] }); // Asigna el ID del usuario al carrito
             await newCart.save();
             console.log('Carrito creado correctamente:', newCart);
             return newCart;
@@ -12,6 +14,7 @@ class CartManager {
             throw error;
         }
     }
+
 
     async getCart(cartId) {
         try {

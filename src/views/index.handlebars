@@ -141,7 +141,7 @@
         }
 
         function fetchCartProductsAndUpdateList() {
-            fetch(`/api/carts`) // Eliminamos ${userId}/products para obtener el carrito del usuario actual
+            fetch(`/api/carts`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Error al obtener carrito');
@@ -153,7 +153,7 @@
                     cartProductList.innerHTML = '';
                     data.products.forEach(product => {
                         const listItem = document.createElement('li');
-                        listItem.textContent = `${product.productId.title} - ${product.productId.price}`; // Accedemos a product.productId.title
+                        listItem.textContent = `${product.productId.title} - ${product.productId.price}`;
                         cartProductList.appendChild(listItem);
                     });
                 })
@@ -207,7 +207,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             fetchProductsAndUpdateList();
-            fetchCartProductsAndUpdateList(); // Actualiza la lista de productos del carrito al cargar la página
+            fetchCartProductsAndUpdateList();
         });
 
         socket.on('productCreated', () => {

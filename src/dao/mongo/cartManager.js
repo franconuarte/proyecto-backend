@@ -5,7 +5,7 @@ class CartManager {
 
     async addCart(userId) {
         try {
-            const newCart = new Cart({ userId, products: [] }); // Asigna el ID del usuario al carrito
+            const newCart = new Cart({ userId, products: [] }); 
             await newCart.save();
             console.log('Carrito creado correctamente:', newCart);
             return newCart;

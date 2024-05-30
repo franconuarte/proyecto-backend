@@ -7,10 +7,10 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const productsRouter = require('./routes/productRoutes.js');
 const cartsRouter = require('./routes/cartRoutes.js');
-const authRouter = require('./routes/authRoutes.js'); // Importa las rutas de autenticación
+const authRouter = require('./routes/authRoutes.js');
 const Message = require('./dao/models/message.js');
 const ProductManager = require('./dao/mongo/productManager.js');
-const authMiddleware = require('./middleware/authMiddleware.js'); // Importa el middleware de autenticación
+const authMiddleware = require('./middleware/authMiddleware.js');
 
 const app = express();
 const http = require('http').Server(app);
@@ -58,7 +58,7 @@ app.use(session({ secret: 'your-secret-key', resave: false, saveUninitialized: t
 
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
-app.use('/', authRouter); // Usa las rutas de autenticación
+app.use('/', authRouter);
 
 app.set('views', path.join(__dirname, 'views'));
 
@@ -75,7 +75,7 @@ app.set('view engine', '.handlebars');
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
-    res.redirect('/register'); // Redirige automáticamente a la página de registro
+    res.redirect('/register');
 });
 
 app.get('/realTimeProducts', authMiddleware, (req, res) => {

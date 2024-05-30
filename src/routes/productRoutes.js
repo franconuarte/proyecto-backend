@@ -34,8 +34,8 @@ router.post('/', async (req, res) => {
     const productData = req.body;
     try {
         const product = await productManager.addProduct(productData);
-        req.io.emit('productCreated'); // Emite un evento de producto creado
-        res.status(201).json({ status: 'success', payload: product }); // Envía la respuesta JSON con el producto creado
+        req.io.emit('productCreated'); 
+        res.status(201).json({ status: 'success', payload: product }); 
     } catch (error) {
         res.status(500).json({ status: 'error', message: 'Error al crear producto' });
     }

@@ -1,10 +1,8 @@
-// authRoutes.js
-
 const express = require('express');
 const router = express.Router();
 const User = require('../dao/models/user.js');
 
-// Ruta de inicio de sesión
+
 router.get('/login', (req, res) => {
     res.render('login');
 });
@@ -25,7 +23,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Ruta de registro
+
 router.get('/register', (req, res) => {
     res.render('register');
 });
@@ -43,7 +41,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// Ruta de cierre de sesión
+
 router.get('/logout', (req, res) => {
     req.session.destroy();
     res.redirect('/login');

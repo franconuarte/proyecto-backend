@@ -1,49 +1,44 @@
 const express = require('express');
 const router = express.Router();
+const passport = require('passport');
 const User = require('../dao/models/user.js');
-
 
 router.get('/login', (req, res) => {
     res.render('login');
 });
 
-router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
-    try {
-        const user = await User.findOne({ email, password });
-        if (!user) {
-            return res.status(401).send('Credenciales incorrectas');
-        }
-
-        req.session.user = user;
-        return res.redirect('/index');
-    } catch (error) {
-        console.error('Error al iniciar sesión:', error);
-        res.status(500).send('Error interno del servidor');
-    }
-});
-
+router.post('/login', passport.authenticate('login', {
+    successRedirect: '/index',
+    failureRedirect: '/login',
+    failureFlash: true
+}));
 
 router.get('/register', (req, res) => {
     res.render('register');
 });
 
-router.post('/register', async (req, res) => {
-    const { email, password } = req.body;
-    try {
-        const newUser = new User({ email, password });
-        await newUser.save();
-        req.session.user = newUser;
-        return res.redirect('/index');
-    } catch (error) {
-        console.error('Error al registrar usuario:', error);
-        res.status(500).send('Error interno del servidor');
-    }
+router.post('/register', (req, res, next) => {
+    passport.authenticate('register', (err, user, info) => {
+        if (err) {
+            console.error('Error en la autenticación:', err);
+            return next(err);
+        }
+        if (!user) {
+            req.flash('error', info.message);
+            return res.redirect('/register');
+        }
+        req.login(user, (err) => {
+            if (err) {
+                console.error('Error al iniciar sesión:', err);
+                return next(err);
+            }
+            return res.redirect('/index');
+        });
+    })(req, res, next);
 });
 
-
 router.get('/logout', (req, res) => {
-    req.session.destroy();
+    req.logout();
     res.redirect('/login');
 });
 

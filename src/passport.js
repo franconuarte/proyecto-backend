@@ -1,8 +1,6 @@
-// passport.js
-
 const passport = require('passport');
 const GitHubStrategy = require('passport-github').Strategy;
-const User = require('./dao/models/user'); // Ajusta la ruta según tu estructura de archivos
+const User = require('./dao/models/user');
 
 passport.use(new GitHubStrategy({
     clientID: 'Ov23li5X0606PEzj5lRv',

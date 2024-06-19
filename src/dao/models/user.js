@@ -1,4 +1,3 @@
-// user.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const Schema = mongoose.Schema;
@@ -13,7 +12,7 @@ const userSchema = new Schema({
     role: { type: String, default: 'user' }
 });
 
-// Hash de contraseña antes de guardar en la base de datos
+
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();
     try {
@@ -25,7 +24,7 @@ userSchema.pre('save', async function (next) {
     }
 });
 
-// Método para comparar contraseñas
+
 userSchema.methods.comparePassword = function (candidatePassword) {
     return bcrypt.compare(candidatePassword, this.password);
 };

@@ -1,11 +1,9 @@
-// authRoutes.js
-
 const express = require('express');
 const router = express.Router();
-const passport = require('../passport.js'); // Asegúrate de que esté apuntando correctamente a tu archivo passport.js
+const passport = require('../passport.js');
 const User = require('../dao/models/user.js');
 
-// Ruta de login
+
 router.get('/login', (req, res) => {
     res.render('login');
 });
@@ -16,7 +14,7 @@ router.post('/login', passport.authenticate('login', {
     failureFlash: true
 }));
 
-// Ruta de registro
+
 router.get('/register', (req, res) => {
     res.render('register');
 });
@@ -42,21 +40,21 @@ router.post('/register', (req, res, next) => {
     })(req, res, next);
 });
 
-// Ruta de logout
+
 router.get('/logout', (req, res) => {
     req.logout();
     res.redirect('/login');
 });
 
-// Ruta de autenticación de GitHub
+
 router.get('/auth/github',
     passport.authenticate('github'));
 
-// Ruta de callback después de autenticación con GitHub
+
 router.get('/auth/github/callback',
     passport.authenticate('github', { failureRedirect: '/login' }),
     (req, res) => {
-        // Redirigir al usuario a '/index' después de la autenticación exitosa
+
         res.redirect('/index');
     });
 

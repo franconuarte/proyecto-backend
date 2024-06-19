@@ -1,16 +1,21 @@
+// user.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
-    githubId: { type: String, unique: true, sparse: true },
-    email: { type: String, required: false, unique: true, sparse: true },
-    password: { type: String, required: false },
+    first_name: { type: String },
+    last_name: { type: String },
+    email: { type: String, unique: true, required: true },
+    age: { type: Number },
+    password: { type: String, required: true },
+    cart: { type: Schema.Types.ObjectId, ref: 'Cart' },
     role: { type: String, default: 'user' }
 });
 
+// Hash de contraseña antes de guardar en la base de datos
 userSchema.pre('save', async function (next) {
-    if (!this.isModified('password') || !this.password) return next();
+    if (!this.isModified('password')) return next();
     try {
         const salt = await bcrypt.genSalt(10);
         this.password = await bcrypt.hash(this.password, salt);
@@ -20,6 +25,7 @@ userSchema.pre('save', async function (next) {
     }
 });
 
+// Método para comparar contraseñas
 userSchema.methods.comparePassword = function (candidatePassword) {
     return bcrypt.compare(candidatePassword, this.password);
 };

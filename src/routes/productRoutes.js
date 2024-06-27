@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const ProductManager = require('../dao/mongo/productManager.js');
+const ProductManager = require('../dao/mongo/productManager');
 const productManager = new ProductManager();
 
 
@@ -34,8 +34,7 @@ router.post('/', async (req, res) => {
     const productData = req.body;
     try {
         const product = await productManager.addProduct(productData);
-        req.io.emit('productCreated'); 
-        res.status(201).json({ status: 'success', payload: product }); 
+        res.status(201).json({ status: 'success', payload: product });
     } catch (error) {
         res.status(500).json({ status: 'error', message: 'Error al crear producto' });
     }
@@ -58,7 +57,6 @@ router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     try {
         await productManager.deleteProduct(id);
-        req.io.emit('productDeleted');
         res.status(204).send();
     } catch (error) {
         res.status(500).json({ status: 'error', message: 'Error al eliminar producto' });

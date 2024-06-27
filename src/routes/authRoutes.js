@@ -1,8 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const passport = require('../passport.js');
-const User = require('../dao/models/user.js');
+const passport = require('../passport');
+const authMiddleware = require('../middleware/authMiddleware');
+const User = require('../dao/models/user');
 
+
+router.get('/api/sessions/current', authMiddleware, (req, res) => {
+    res.json({ user: req.user });
+});
 
 router.get('/login', (req, res) => {
     res.render('login');
@@ -13,7 +18,6 @@ router.post('/login', passport.authenticate('login', {
     failureRedirect: '/login',
     failureFlash: true
 }));
-
 
 router.get('/register', (req, res) => {
     res.render('register');
@@ -40,21 +44,17 @@ router.post('/register', (req, res, next) => {
     })(req, res, next);
 });
 
-
 router.get('/logout', (req, res) => {
     req.logout();
     res.redirect('/login');
 });
 
-
 router.get('/auth/github',
     passport.authenticate('github'));
-
 
 router.get('/auth/github/callback',
     passport.authenticate('github', { failureRedirect: '/login' }),
     (req, res) => {
-
         res.redirect('/index');
     });
 

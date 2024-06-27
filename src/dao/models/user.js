@@ -12,7 +12,6 @@ const userSchema = new Schema({
     role: { type: String, default: 'user' }
 });
 
-
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();
     try {
@@ -23,7 +22,6 @@ userSchema.pre('save', async function (next) {
         next(error);
     }
 });
-
 
 userSchema.methods.comparePassword = function (candidatePassword) {
     return bcrypt.compare(candidatePassword, this.password);

@@ -2,16 +2,20 @@ const express = require('express');
 const router = express.Router();
 const passport = require('../passport');
 const authMiddleware = require('../middleware/authMiddleware');
-const User = require('../dao/models/user');
+const {
+    getCurrentSession,
+    renderLogin,
+    renderRegister,
+    register,
+    logout,
+    githubAuth,
+    githubAuthCallback
+} = require('../controllers/authController');
 
 
-router.get('/api/sessions/current', authMiddleware, (req, res) => {
-    res.json({ user: req.user });
-});
+router.get('/api/sessions/current', authMiddleware, getCurrentSession);
 
-router.get('/login', (req, res) => {
-    res.render('login');
-});
+router.get('/login', renderLogin);
 
 router.post('/login', passport.authenticate('login', {
     successRedirect: '/index',
@@ -19,43 +23,17 @@ router.post('/login', passport.authenticate('login', {
     failureFlash: true
 }));
 
-router.get('/register', (req, res) => {
-    res.render('register');
-});
+router.get('/register', renderRegister);
 
-router.post('/register', (req, res, next) => {
-    passport.authenticate('register', (err, user, info) => {
-        if (err) {
-            console.error('Error en la autenticación:', err);
-            return next(err);
-        }
-        if (!user) {
-            req.flash('error', info.message);
-            return res.redirect('/register');
-        }
-        req.login(user, (err) => {
-            if (err) {
-                console.error('Error al iniciar sesión:', err);
-                return next(err);
-            }
-            console.log("Usuario registrado y sesión iniciada:", user);
-            return res.redirect('/index');
-        });
-    })(req, res, next);
-});
+router.post('/register', register);
 
-router.get('/logout', (req, res) => {
-    req.logout();
-    res.redirect('/login');
-});
+router.get('/logout', logout);
 
-router.get('/auth/github',
-    passport.authenticate('github'));
+router.get('/auth/github', githubAuth);
 
 router.get('/auth/github/callback',
     passport.authenticate('github', { failureRedirect: '/login' }),
-    (req, res) => {
-        res.redirect('/index');
-    });
+    githubAuthCallback
+);
 
 module.exports = router;
